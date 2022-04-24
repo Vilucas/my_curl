@@ -20,5 +20,5 @@
 #define MEM_ALLOC_FAILED -3
 #define BIND_FAILED -4
 #define CONNECTION_FAILED -5
-
+#define MAX_CMD_SIZE 100
 #endif

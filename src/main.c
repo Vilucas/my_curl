@@ -1,37 +1,72 @@
-#include "system.h"
+#include "../includes/system.h"
 //client side
-int         my_curl(char *url)
+static int client_socket;
+
+int getCommandId(char *s)
 {
-    char header[] = "GET /  HTTP/1.0\r\nHost:  \r\n\r\n";
-    struct hostent *name; 
+    printf("PAS\n");
+    int bytes;
+    char buff[MAX_CMD_SIZE + 1];
+    while ((bytes = read(1, &buff, MAX_CMD_SIZE)))
+    {
+        buff[bytes] = '\0';
+        if (!strncmp(buff, "sendFile", 8))
+        {
+            return 1;
+        }
+    }
+    return (0);
+}
+
+int sendFileToServ(char *arg)
+{
+    printf("PAS1\n");
+    //int fd = open(arg, 'r'); 
+    printf("%d\n", client_socket);
+    int ret = send(client_socket, "ijoj", 5, 0);
+    printf("ret = %d", ret);
+    return (0);
+}
+
+int analyse_buffer(char *s)
+{
+    int cmd = getCommandId(s);
+    switch (cmd) {
+        case 1:
+            sendFileToServ(s + 9);
+    }
+    return (0);
+}
+
+int         connectToServer(char *url)
+{
+    printf("%s\n%d\n", url, SERVER_PORT);
     struct sockaddr_in client;
-    int client_socket, charRead;
+
+    int charRead;
+
     char server_res[SERVER_RES_MAX_LENGTH + 1];
     //create the socket
     if ((client_socket = socket(AF_INET, SOCK_STREAM, 0)) == -1)
         return SOCKET_ALLOCATION_FAILED;
-    //alloc for the struct
-    /*
-    if (!(client = malloc(sizeof(struct sockaddr_in*))))
-        return MEM_ALLOC_FAILED; */
+
     client.sin_family = AF_INET;
-    client.sin_port = htons(SERVER_PORT);
-    name = gethostbyname(url);
-    printf("%d\n", *name->h_addr_list[0]);
-    client.sin_addr  = *(struct in_addr *)inet_ntoa(*(struct in_addr*)name->h_addr_list[0]);
-   
-    //connect to the socket
+    client.sin_port = SERVER_PORT;
+    client.sin_addr.s_addr = inet_addr(url);
+
     int connect_socket = connect(client_socket, (struct sockaddr *) &client, sizeof(client));
     if (connect_socket < 0)
         return CONNECTION_FAILED;
     int readBytes;
-    printf("print\n");
-    write(client_socket, &header, sizeof(header));
-    while ((readBytes = recv(client_socket, server_res, SERVER_RES_MAX_LENGTH -1, 0)) > 0)
+
+    while ((readBytes = read(client_socket, server_res, SERVER_RES_MAX_LENGTH - 1)) > 0)
     {
         server_res[SERVER_RES_MAX_LENGTH] = '\0';
-        printf("%s\n", server_res);
+
+        printf("&>\n");
+        analyse_buffer(server_res);
     }
+  
     return (0);
 }
 
@@ -39,14 +74,9 @@ int         main(int ac, char **av)
 {
     int error_code;
 
-  
-    if (ac != 2 || !av[1])
-    {
-        printf("USAGEvoid [url]");
-        exit(NO_ARG);
-    }
-  
-    if (( error_code = my_curl(av[1])) < 0)
+    char deafaultUrl[] = "127.0.0.1"; //~fdc/sample.html
+    ac != 2 ? (error_code = connectToServer(deafaultUrl)) : (error_code = connectToServer(av[1]));
+     if ( error_code < 0)
     {
         printf("error occured with code %d", error_code);
         return error_code;

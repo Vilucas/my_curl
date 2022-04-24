@@ -1,12 +1,12 @@
 #include "system.h"
 
-
+static int server_socket;
 //Server side is binding and listening
-int server()
+int serverWaitForConnection()
 {
     char buffer[256];
     char server_message[256] = "You've reached the server";
-    int server_socket = socket(AF_INET, SOCK_STREAM, 0);
+    server_socket = socket(AF_INET, SOCK_STREAM, 0);
     if (server_socket < 0)
         return SOCKET_ALLOCATION_FAILED;
     
@@ -21,11 +21,30 @@ int server()
     listen(server_socket, 5);
     int client_socket = accept(server_socket, NULL, NULL);
     send(client_socket,server_message, sizeof(server_message), 0);
-
     return (0);
 }
 
 int main()
 {
-    server();
+    char buff[100];
+    serverWaitForConnection(); //think about multithreading
+    struct sockaddr_in newAddr; 
+
+    while (1)
+    {
+        socklen_t size = sizeof(newAddr);
+        printf("ok\n");
+        int dataSock = accept(server_socket, (struct sockaddr*)&newAddr, &size);
+        printf("ok\n");
+        printf("%u\n", size);
+        int readBytes;
+        while ((readBytes = read(dataSock, buff, SERVER_RES_MAX_LENGTH - 1)) > 0)
+        {
+            buff[readBytes] = '\0';
+        
+        }
+    
+    }
+    
+    
 }
