@@ -4,17 +4,8 @@ static int client_socket;
 
 int getCommandId(char *s)
 {
-    printf("PAS\n");
-    int bytes;
-    char buff[MAX_CMD_SIZE + 1];
-    while ((bytes = read(1, &buff, MAX_CMD_SIZE)))
-    {
-        buff[bytes] = '\0';
-        if (!strncmp(buff, "sendFile", 8))
-        {
-            return 1;
-        }
-    }
+    if (!strncmp(s, "sendFile", 8))
+        return 1;
     return (0);
 }
 
@@ -22,15 +13,15 @@ int sendFileToServ(char *arg)
 {
     printf("PAS1\n");
     //int fd = open(arg, 'r'); 
-    printf("%d\n", client_socket);
-    int ret = send(client_socket, "ijoj", 5, 0);
-    printf("ret = %d", ret);
+    int fd = send(client_socket, "ijoj", 5, 0);
+    printf("%d\n", fd);
     return (0);
 }
 
 int analyse_buffer(char *s)
 {
     int cmd = getCommandId(s);
+    printf("SERV CMD %s\n", s);
     switch (cmd) {
         case 1:
             sendFileToServ(s + 9);
@@ -59,12 +50,13 @@ int         connectToServer(char *url)
         return CONNECTION_FAILED;
     int readBytes;
 
-    while ((readBytes = read(client_socket, server_res, SERVER_RES_MAX_LENGTH - 1)) > 0)
+
+    while ((readBytes = read(1, server_res, SERVER_RES_MAX_LENGTH - 1)) > 0)
     {
         server_res[SERVER_RES_MAX_LENGTH] = '\0';
 
-        printf("&>\n");
-        analyse_buffer(server_res);
+        printf("%s\n", server_res);
+        analyse_buffer(strdup(server_res));
     }
   
     return (0);
